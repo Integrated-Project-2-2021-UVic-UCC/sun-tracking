@@ -1,0 +1,68 @@
+#include <Wire.h>
+#include "RTClib.h"
+ 
+const int outputPin = LED_BUILTIN;
+bool state = false;
+ 
+RTC_DS3231 rtc;
+ 
+void setup() {
+   Serial.begin(9600);
+   delay(1000);
+   pinMode(outputPin,OUTPUT);
+   if (!rtc.begin()) {
+      Serial.println(F("Couldn't find RTC"));
+      while (1);
+   }
+ 
+   if (rtc.lostPower()) {
+      rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+   }
+}
+ 
+bool isScheduledON(DateTime date)
+{
+   int weekDay = date.dayOfTheWeek();
+   float hours = date.hour() + date.minute() / 60.0;
+ 
+   // from 09:30 to 11:30 and from 21:00 to 23:00
+   bool hourCondition = (hours > 9.30 && hours < 11.30) || (hours > 21.00 && hours < 23.00);
+ 
+   // Wednesday, Saturday or Sunday
+   bool dayCondition = (weekDay == 2 || weekDay == 5 || weekDay == 0); 
+   if (hourCondition && dayCondition)
+   {
+      return true;
+   }
+   return false;
+}
+
+void printDate(DateTime date)
+{
+   Serial.print(date.hour(), DEC);
+   Serial.print(':');
+   Serial.print(date.minute(), DEC);
+   Serial.print(':');
+   Serial.print(date.second(), DEC);
+   Serial.println();
+}
+ 
+ 
+void loop() {
+   DateTime now = rtc.now();
+   printDate(now);
+   if (state == false && isScheduledON(now))      // Off and the LED should be on
+   {
+      digitalWrite(outputPin, HIGH);
+      state = true;
+      Serial.print("Activado");
+   }
+   else if (state == true && !isScheduledON(now))  // On and the LED should be off
+   {
+      digitalWrite(outputPin, LOW);
+      state = false;
+      Serial.print("Desactivado");
+   }
+ 
+   delay(3000);
+}
