@@ -1,0 +1,55 @@
+#include <SolarPosition.h>
+
+#include <DS1307RTC.h>
+
+const uint8_t digits = 3;
+
+SolarPosition Vic(41.93012, 2.25486);
+
+void setup()
+{
+  Serial.begin(9600);
+  SolarPosition::setTimeProvider(RTC.get);
+}
+
+void loop()
+{
+
+  printTime(RTC.get());
+
+  Serial.print(F("Vic:\t"));
+  printSolarPosition(Vic.getSolarPosition(), digits);
+  delay(15000);
+}
+
+void printSolarPosition(SolarPosition_t pos, int numDigits)
+{
+  Serial.print(F("el: "));
+  Serial.print(pos.elevation, numDigits);
+  Serial.print(F(" deg\t"));
+
+  Serial.print(F("az: "));
+  Serial.print(pos.azimuth, numDigits);
+  Serial.println(F(" deg"));
+}
+
+
+void printTime(time_t t)
+{
+  tmElements_t someTime;
+  breakTime(t, someTime);
+  int SomeTime = someTime.Hour - 2;
+  Serial.print(SomeTime);
+  Serial.print(F(":"));
+  Serial.print(someTime.Minute);
+  Serial.print(F(":"));
+  Serial.print(someTime.Second);
+  Serial.print(F(" UTC on "));
+  Serial.print(dayStr(someTime.Wday));
+  Serial.print(F(", "));
+  Serial.print(monthStr(someTime.Month));
+  Serial.print(F(" "));
+  Serial.print(someTime.Day);
+  Serial.print(F(", "));
+  Serial.println(tmYearToCalendar(someTime.Year));
+}
